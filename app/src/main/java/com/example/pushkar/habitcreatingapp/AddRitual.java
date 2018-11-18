@@ -1,7 +1,18 @@
 package com.example.pushkar.habitcreatingapp;
 
+import android.annotation.TargetApi;
+import android.app.AlarmManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.TimePickerDialog;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -14,6 +25,7 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import com.example.pushkar.habitcreatingapp.Activity.Myalarm;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
@@ -21,6 +33,7 @@ import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 
 public class AddRitual extends AppCompatActivity implements TimePickerDialog.OnTimeSetListener {
@@ -32,12 +45,15 @@ public class AddRitual extends AppCompatActivity implements TimePickerDialog.OnT
     DatabaseReference myRef;
     String id1;
     String day;
-    String a;
+    public static String a;
     int hour,min;
     TextView time1;
     String username;
     String z;
+    Calendar calendar;
+    public int alarmid = 0;
     FirebaseUser user;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,6 +97,8 @@ public class AddRitual extends AppCompatActivity implements TimePickerDialog.OnT
         return true;
     }
 
+    @TargetApi(Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
@@ -104,6 +122,15 @@ public class AddRitual extends AppCompatActivity implements TimePickerDialog.OnT
 
                     myRef.child(z).child(id1).setValue(rituals);
                     Toast.makeText(AddRitual.this, "Data inserted succesfully",Toast.LENGTH_SHORT).show();
+
+                    calendar = Calendar.getInstance();
+                    calendar.set(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH),
+                            hour, min, 0);
+                    long ab = calendar.getTimeInMillis();
+                    alarmid++;
+                    setAlarm(ab);
+
+
                 }
                 else
                 {
@@ -134,4 +161,20 @@ public class AddRitual extends AppCompatActivity implements TimePickerDialog.OnT
             }
         }
     }
+
+    private void setAlarm(long time) {
+        //getting the alarm manager
+        AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+        //creating a new intent specifying the broadcast receiver
+        Intent i = new Intent(this,Myalarm.class);
+
+        //creating a pending intent using the intent
+        PendingIntent pi = PendingIntent.getBroadcast(this, alarmid, i, 0);
+
+        //setting the repeating alarm that will be fired every day
+        am.setRepeating(AlarmManager.RTC_WAKEUP, time, AlarmManager.INTERVAL_DAY, pi);
+        Toast.makeText(this, "Alarm is set", Toast.LENGTH_SHORT).show();
+    }
+
 }
